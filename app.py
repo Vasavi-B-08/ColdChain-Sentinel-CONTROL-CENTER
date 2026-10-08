@@ -69,7 +69,9 @@ div[data-testid="stAlert"]{border-radius:12px}
 """, unsafe_allow_html=True)
 
 # --------------------------- MODEL + SECURITY ---------------------------
-def thermal_sim(ambient, initial, minutes, mode, door):
+
+def thermal_sim(ambient, initial, minutes, mode, door,
+                cooling_failure=False):
     dt = .25
     t = np.arange(0, minutes + dt, dt)
     temp = np.zeros_like(t)
@@ -78,7 +80,10 @@ def thermal_sim(ambient, initial, minutes, mode, door):
     last = 0.0
     for i in range(1, len(t)):
         cur = temp[i-1]
-        if mode == "Hysteresis":
+
+        if cooling_failure:
+            cmd = 0.0
+        elif mode == "Hysteresis":
             if cur > 6:
                 last = 1
             elif cur < 4:
@@ -86,8 +91,13 @@ def thermal_sim(ambient, initial, minutes, mode, door):
             cmd = last
         else:
             cmd = float(np.clip(.22 * (cur - 5) + .10, 0, 1))
+            
         heat = .18 if door and 22 <= t[i] <= 26 else 0
-        temp[i] = cur + (((ambient-cur)/35) + heat - .34*cmd) * dt
+
+        temp[i] = cur + (
+            ((ambient - cur) / 35) + heat - .34 * cmd
+        ) * dt
+
         output[i] = cmd
     return t, temp, output
 
@@ -118,8 +128,27 @@ with st.sidebar:
     st.divider()
     st.caption("Educational digital twin — not a validated medical device.")
 
+# Apply the selected demonstration scenario
+scenario = st.session_state.get("scenario", "Normal operation")
+cooling_failure = False
+
+if scenario == "Normal operation":
+    initial = 5.0
+    door = False
+
+elif scenario == "Door opened":
+    initial = 5.0
+    door = True
+
+elif scenario == "Cooling failure":
+    initial = 5.0
+    door = False
+    cooling_failure = True
+
 # --------------------------- COMPUTE ---------------------------
-t, T, U = thermal_sim(ambient, initial, duration, mode, door)
+t, T, U = thermal_sim(
+    ambient, initial, duration, mode, door, cooling_failure
+)
 final = float(T[-1])
 safe = 2 <= final <= 8
 now = datetime.now().strftime("%H:%M:%S")
@@ -142,6 +171,20 @@ st.markdown(f"""
   </div>
 </div>
 """, unsafe_allow_html=True)
+
+# Selected scenario banner
+if scenario == "Normal operation":
+    st.success(
+        "NORMAL OPERATION — simulated chamber starts at 5°C."
+    )
+elif scenario == "Door opened":
+    st.warning(
+        "DOOR OPENED — simulated heat disturbance is enabled."
+    )
+else:
+    st.error(
+        "COOLING FAILURE — simulated cooling output is disabled."
+    )
 
 if threat:
     st.markdown("""
