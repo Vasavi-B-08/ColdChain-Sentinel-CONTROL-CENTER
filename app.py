@@ -72,7 +72,20 @@ div[data-testid="stAlert"]{border-radius:12px}
 
 def thermal_sim(ambient, initial, minutes, mode, door,
                 cooling_failure=False):
-          if cooling_failure:
+        
+def thermal_sim(ambient, initial, minutes, mode, door,
+                cooling_failure=False):
+    dt = .25
+    t = np.arange(0, minutes + dt, dt)
+    temp = np.zeros_like(t)
+    output = np.zeros_like(t)
+    temp[0] = initial
+    last = 0.0
+
+    for i in range(1, len(t)):
+        cur = temp[i-1]
+
+        if cooling_failure:
             cmd = 0.0
         elif mode == "Hysteresis":
             if cur > 6:
@@ -82,6 +95,17 @@ def thermal_sim(ambient, initial, minutes, mode, door,
             cmd = last
         else:
             cmd = float(np.clip(.22 * (cur - 5) + .10, 0, 1))
+
+        heat = .18 if door and 22 <= t[i] <= 26 else 0
+
+        temp[i] = cur + (
+            ((ambient - cur) / 35) + heat - .34 * cmd
+        ) * dt
+
+        output[i] = cmd
+
+    return t, temp, output
+
 
 def packet(temp, seq, key):
     payload = {"device_id": "CCS-ESP32-01", "seq": int(seq), "temp": round(float(temp), 2)}
