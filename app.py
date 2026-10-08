@@ -8,6 +8,101 @@ import json
 import time
 from datetime import datetime
 
+
+# --- COLDCHAIN SENTINEL: SCENARIO SELECTOR ---
+
+import streamlit as st
+import numpy as np
+import pandas as pd
+
+if "scenario" not in st.session_state:
+    st.session_state.scenario = "Normal operation"
+
+st.subheader("Cold-chain scenario simulator")
+st.caption(
+    "Educational simulation only — not live sensor data."
+)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.button(
+        "🟢 Normal operation",
+        use_container_width=True,
+        on_click=lambda: setattr(
+            st.session_state, "scenario", "Normal operation"
+        ),
+    )
+
+with col2:
+    st.button(
+        "🟠 Door opened",
+        use_container_width=True,
+        on_click=lambda: setattr(
+            st.session_state, "scenario", "Door opened"
+        ),
+    )
+
+with col3:
+    st.button(
+        "🔴 Cooling failure",
+        use_container_width=True,
+        on_click=lambda: setattr(
+            st.session_state, "scenario", "Cooling failure"
+        ),
+    )
+
+scenario = st.session_state.scenario
+
+# Example simulated temperature profiles
+minutes = np.arange(0, 61, 5)
+
+if scenario == "Normal operation":
+    temperatures = [
+        5.0, 5.1, 4.9, 5.0, 5.2, 5.0, 4.9,
+        5.1, 5.0, 5.2, 5.0, 4.9, 5.0
+    ]
+    st.success("SAFE — simulated temperature is within 2–8°C.")
+
+elif scenario == "Door opened":
+    temperatures = [
+        5.0, 5.2, 5.6, 6.2, 6.9, 7.5, 8.1,
+        8.3, 7.9, 7.2, 6.6, 6.0, 5.5
+    ]
+    st.warning(
+        "DOOR OPEN — simulated temperature rises, "
+        "then falls as cooling recovers."
+    )
+
+else:
+    temperatures = [
+        5.0, 5.4, 5.9, 6.5, 7.2, 8.0, 8.8,
+        9.5, 10.2, 10.8, 11.4, 12.0, 12.5
+    ]
+    st.error(
+        "CRITICAL — simulated cooling failure; "
+        "temperature exceeds 8°C."
+    )
+
+st.metric(
+    "Simulated chamber temperature",
+    f"{temperatures[-1]:.1f} °C",
+    help="This is the final value in the simulated 60-minute scenario."
+)
+
+chart_data = pd.DataFrame({
+    "Minutes": minutes,
+    "Temperature (°C)": temperatures,
+}).set_index("Minutes")
+
+st.line_chart(chart_data, y="Temperature (°C)")
+
+st.caption(
+    f"Selected scenario: {scenario} | "
+    "Target: 5°C | Permitted range: 2–8°C"
+)
+
+
 st.set_page_config(page_title="ColdChain Sentinel | Control Center", page_icon="❄️", layout="wide")
 
 # --------------------------- VISUAL SYSTEM ---------------------------
