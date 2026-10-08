@@ -186,7 +186,7 @@ now = datetime.now().strftime("%H:%M:%S")
 demo = float(T[int(len(T) * .72)])
 
 # --------------------------- SECURITY PACKET DEMO ---------------------------
-SECRET_KEY = "coldchain-demo-secret"
+SECRET_KEY = st.secrets["HMAC_SECRET_KEY"]
 
 # Generate one authentic packet
 trusted, trusted_tag = packet(demo, 104, SECRET_KEY)
@@ -205,7 +205,16 @@ tampered_valid = verify_packet(
 threat = bool(attack)
 
 # Replay demo: accept sequence 104, then try the same packet again
-last_accepted_seq = 103
+if "last_accepted_seq_by_device" not in st.session_state:
+    st.session_state.last_accepted_seq_by_device = {}
+
+device_id = trusted["device_id"]
+
+last_accepted_seq = (
+    st.session_state.last_accepted_seq_by_device.get(
+        device_id, 103
+    )
+)
 first_packet_valid = verify_packet(
     trusted, trusted_tag, SECRET_KEY
 ) and sequence_is_fresh(
@@ -213,7 +222,9 @@ first_packet_valid = verify_packet(
 )
 
 if first_packet_valid:
-    last_accepted_seq = trusted["seq"]
+   st.session_state.last_accepted_seq_by_device[
+    device_id
+] = trusted["seq"]
 
 replay_rejected = (
     replay_attack
