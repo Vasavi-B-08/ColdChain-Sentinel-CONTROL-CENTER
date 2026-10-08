@@ -69,9 +69,6 @@ div[data-testid="stAlert"]{border-radius:12px}
 """, unsafe_allow_html=True)
 
 # --------------------------- MODEL + SECURITY ---------------------------
-
-def thermal_sim(ambient, initial, minutes, mode, door,
-                cooling_failure=False):
         
 def thermal_sim(ambient, initial, minutes, mode, door,
                 cooling_failure=False):
