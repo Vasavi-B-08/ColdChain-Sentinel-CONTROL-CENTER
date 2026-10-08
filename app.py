@@ -181,7 +181,7 @@ st.markdown(f"""
 
 
     # Three demonstration scenarios
-    if "scenario" not in st.session_state:
+if "scenario" not in st.session_state:
         st.session_state.scenario = "Normal operation"
 
     st.button(
