@@ -183,9 +183,9 @@ st.markdown(f"""
 if "scenario" not in st.session_state:
         st.session_state.scenario = "Normal operation"
 
-    st.caption("Choose a demonstration scenario")
+st.caption("Choose a demonstration scenario")
 
-    st.button(
+st.button(
         "🟢 Normal operation",
         key="scenario_normal",
         use_container_width=True,
@@ -194,7 +194,7 @@ if "scenario" not in st.session_state:
         ),
     )
 
-    st.button(
+st.button(
         "🟠 Door opened",
         key="scenario_door",
         use_container_width=True,
@@ -203,7 +203,7 @@ if "scenario" not in st.session_state:
         ),
     )
 
-    st.button(
+st.button(
         "🔴 Cooling failure",
         key="scenario_failure",
         use_container_width=True,
@@ -212,8 +212,8 @@ if "scenario" not in st.session_state:
         ),
     )
 
-    st.caption(f"Selected scenario: {st.session_state.scenario}")
-    st.divider()
+st.caption(f"Selected scenario: {st.session_state.scenario}")
+st.divider()
 
 
 if threat:
