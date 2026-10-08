@@ -72,16 +72,7 @@ div[data-testid="stAlert"]{border-radius:12px}
 
 def thermal_sim(ambient, initial, minutes, mode, door,
                 cooling_failure=False):
-    dt = .25
-    t = np.arange(0, minutes + dt, dt)
-    temp = np.zeros_like(t)
-    output = np.zeros_like(t)
-    temp[0] = initial
-    last = 0.0
-    for i in range(1, len(t)):
-        cur = temp[i-1]
-
-        if cooling_failure:
+          if cooling_failure:
             cmd = 0.0
         elif mode == "Hysteresis":
             if cur > 6:
@@ -91,15 +82,6 @@ def thermal_sim(ambient, initial, minutes, mode, door,
             cmd = last
         else:
             cmd = float(np.clip(.22 * (cur - 5) + .10, 0, 1))
-            
-        heat = .18 if door and 22 <= t[i] <= 26 else 0
-
-        temp[i] = cur + (
-            ((ambient - cur) / 35) + heat - .34 * cmd
-        ) * dt
-
-        output[i] = cmd
-    return t, temp, output
 
 def packet(temp, seq, key):
     payload = {"device_id": "CCS-ESP32-01", "seq": int(seq), "temp": round(float(temp), 2)}
@@ -128,8 +110,12 @@ with st.sidebar:
     st.divider()
     st.caption("Educational digital twin — not a validated medical device.")
 
-# Apply the selected demonstration scenario
-scenario = st.session_state.get("scenario", "Normal operation")
+
+# Apply scenario after reading sidebar controls
+scenario = st.session_state.get(
+    "scenario", "Normal operation"
+)
+
 cooling_failure = False
 
 if scenario == "Normal operation":
@@ -172,19 +158,40 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Selected scenario banner
-if scenario == "Normal operation":
-    st.success(
-        "NORMAL OPERATION — simulated chamber starts at 5°C."
+
+    # Three demonstration scenarios
+    if "scenario" not in st.session_state:
+        st.session_state.scenario = "Normal operation"
+
+    st.button(
+        "🟢 Normal operation",
+        key="scenario_normal",
+        use_container_width=True,
+        on_click=lambda: setattr(
+            st.session_state, "scenario", "Normal operation"
+        ),
     )
-elif scenario == "Door opened":
-    st.warning(
-        "DOOR OPENED — simulated heat disturbance is enabled."
+    st.button(
+        "🟠 Door opened",
+        key="scenario_door",
+        use_container_width=True,
+        on_click=lambda: setattr(
+            st.session_state, "scenario", "Door opened"
+        ),
     )
-else:
-    st.error(
-        "COOLING FAILURE — simulated cooling output is disabled."
+    st.button(
+        "🔴 Cooling failure",
+        key="scenario_failure",
+        use_container_width=True,
+        on_click=lambda: setattr(
+            st.session_state, "scenario", "Cooling failure"
+        ),
     )
+
+    st.caption(
+        f"Selected scenario: {st.session_state.scenario}"
+    )
+    st.divider()
 
 if threat:
     st.markdown("""
