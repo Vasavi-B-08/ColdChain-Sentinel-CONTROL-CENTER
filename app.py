@@ -110,6 +110,25 @@ def packet(temp, seq, key):
     tag = hmac.new(key.encode(), raw, hashlib.sha256).hexdigest()
     return payload, tag
 
+def verify_packet(payload, supplied_tag, key):
+    raw = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode()
+
+    expected_tag = hmac.new(
+        key.encode(),
+        raw,
+        hashlib.sha256,
+    ).hexdigest()
+
+    return hmac.compare_digest(expected_tag, supplied_tag)
+
+
+def sequence_is_fresh(seq, last_accepted_seq):
+    return int(seq) > int(last_accepted_seq)
+
 # --------------------------- SIDEBAR ---------------------------
 with st.sidebar:
     st.markdown("## ❄️ ColdChain Sentinel")
@@ -122,6 +141,11 @@ with st.sidebar:
     mode = st.selectbox("Controller", ["Hysteresis", "PID-like"])
     door = st.checkbox("Door opening disturbance", True)
     attack = st.checkbox("Simulate spoofing attack", True)
+    replay_attack = st.checkbox(
+    "Simulate replay attack",
+    value=False,
+    key="replay_attack",
+)
     st.divider()
     st.markdown("### Chamber hardware")
     st.caption("TEC1-12706 • ESP32 • SHT31")
@@ -160,10 +184,46 @@ final = float(T[-1])
 safe = 2 <= final <= 8
 now = datetime.now().strftime("%H:%M:%S")
 demo = float(T[int(len(T) * .72)])
-trusted, trusted_tag = packet(demo, 104, "coldchain-demo-secret")
-tampered = {"device_id": "CCS-ESP32-01", "seq": 104, "temp": 4.1}
-_, badtag = packet(tampered["temp"], tampered["seq"], "attacker-key")
+
+# --------------------------- SECURITY PACKET DEMO ---------------------------
+SECRET_KEY = "coldchain-demo-secret"
+
+# Generate one authentic packet
+trusted, trusted_tag = packet(demo, 104, SECRET_KEY)
+trusted_valid = verify_packet(trusted, trusted_tag, SECRET_KEY)
+
+# Simulate tampering: change the temperature but retain the original tag
+tampered = dict(trusted)
+tampered["temp"] = 4.1
+
+tampered_valid = verify_packet(
+    tampered,
+    trusted_tag,
+    SECRET_KEY,
+)
+
 threat = bool(attack)
+
+# Replay demo: accept sequence 104, then try the same packet again
+last_accepted_seq = 103
+first_packet_valid = verify_packet(
+    trusted, trusted_tag, SECRET_KEY
+) and sequence_is_fresh(
+    trusted["seq"], last_accepted_seq
+)
+
+if first_packet_valid:
+    last_accepted_seq = trusted["seq"]
+
+replay_rejected = (
+    replay_attack
+    and (
+        not verify_packet(trusted, trusted_tag, SECRET_KEY)
+        or not sequence_is_fresh(
+            trusted["seq"], last_accepted_seq
+        )
+    )
+)
 
 # --------------------------- HEADER ---------------------------
 st.markdown(f"""
@@ -374,11 +434,27 @@ with p2:
     </div>
     """, unsafe_allow_html=True)
 
+st.markdown("### 🔁 Replay-attack test")
+
+if not replay_attack:
+    st.info(
+        "READY TO TEST — enable Simulate replay attack "
+        "in the sidebar to resend an already accepted packet."
+    )
+elif replay_rejected:
+    st.error(
+        "REPLAY REJECTED — sequence 104 was already accepted."
+    )
+else:
+    st.success(
+        "Replay test completed without a replay rejection."
+    )
+
 st.markdown("### 📈 Capability comparison")
 df = pd.DataFrame({
     "Capability": ["Temperature monitoring", "Door disturbance visualization", "Packet authenticity", "Tamper detection demo", "Replay / sequence guard"],
     "Conventional IoT": ["✓", "Sometimes", "—", "—", "—"],
-    "ColdChain Sentinel": ["✓ Model", "✓", "✓ HMAC demo", "✓ Simulated", "✓ Concept"]
+    "ColdChain Sentinel": ["✓ Model", "✓", "✓ HMAC demo", "✓ Simulated", "✓ Sequence-check demo"]
 })
 st.dataframe(df, use_container_width=True, hide_index=True)
 
