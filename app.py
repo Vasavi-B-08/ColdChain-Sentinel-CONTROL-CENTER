@@ -179,10 +179,11 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-
-    # Three demonstration scenarios
-if "scenario" not in st.session_state:
+    # Scenario selector
+    if "scenario" not in st.session_state:
         st.session_state.scenario = "Normal operation"
+
+    st.caption("Choose a demonstration scenario")
 
     st.button(
         "🟢 Normal operation",
@@ -192,6 +193,7 @@ if "scenario" not in st.session_state:
             st.session_state, "scenario", "Normal operation"
         ),
     )
+
     st.button(
         "🟠 Door opened",
         key="scenario_door",
@@ -200,6 +202,7 @@ if "scenario" not in st.session_state:
             st.session_state, "scenario", "Door opened"
         ),
     )
+
     st.button(
         "🔴 Cooling failure",
         key="scenario_failure",
@@ -209,10 +212,9 @@ if "scenario" not in st.session_state:
         ),
     )
 
-    st.caption(
-        f"Selected scenario: {st.session_state.scenario}"
-    )
+    st.caption(f"Selected scenario: {st.session_state.scenario}")
     st.divider()
+
 
 if threat:
     st.markdown("""
