@@ -189,7 +189,8 @@ demo = float(T[int(len(T) * .72)])
 SECRET_KEY = st.secrets["HMAC_SECRET_KEY"]
 
 # Generate one authentic packet
-trusted, trusted_tag = packet(demo, 106, SECRET_KEY)
+trusted, trusted_tag = packet(demo, 105, SECRET_KEY)
+st.session_state.last_accepted_seq_by_device[device_id] = 106
 trusted_valid = verify_packet(trusted, trusted_tag, SECRET_KEY)
 
 # Simulate tampering: change the temperature but retain the original tag
