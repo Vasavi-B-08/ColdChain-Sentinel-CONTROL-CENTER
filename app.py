@@ -224,10 +224,9 @@ if replay_attack:
     replay_rejected = not (packet_authentic and packet_is_new)
 else:
     replay_rejected = False
-    if packet_authentic and packet_is_new:
-        st.session_state.last_accepted_seq_by_device[
-            device_id
-        ] = trusted["seq"]
+
+if packet_authentic and packet_is_new:
+    st.session_state.last_accepted_seq_by_device[device_id] = trusted["seq"]
 
 # --------------------------- HEADER ---------------------------
 st.markdown(f"""
