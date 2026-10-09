@@ -190,7 +190,6 @@ SECRET_KEY = st.secrets["HMAC_SECRET_KEY"]
 
 # Generate one authentic packet
 trusted, trusted_tag = packet(demo, 105, SECRET_KEY)
-st.session_state.last_accepted_seq_by_device[device_id] = 106
 trusted_valid = verify_packet(trusted, trusted_tag, SECRET_KEY)
 
 # Simulate tampering: change the temperature but retain the original tag
@@ -211,6 +210,7 @@ if "last_accepted_seq_by_device" not in st.session_state:
     st.session_state.last_accepted_seq_by_device = {}
 
 device_id = trusted["device_id"]
+st.session_state.last_accepted_seq_by_device[device_id] = 106
 
 last_accepted_seq = st.session_state.last_accepted_seq_by_device.get(
     device_id, 103
