@@ -205,36 +205,29 @@ tampered_valid = verify_packet(
 threat = bool(attack)
 
 # Replay demo: accept sequence 104, then try the same packet again
+# Replay demo: remember the last accepted packet per device
 if "last_accepted_seq_by_device" not in st.session_state:
     st.session_state.last_accepted_seq_by_device = {}
 
 device_id = trusted["device_id"]
 
-last_accepted_seq = (
-    st.session_state.last_accepted_seq_by_device.get(
-        device_id, 103
-    )
+last_accepted_seq = st.session_state.last_accepted_seq_by_device.get(
+    device_id, 103
 )
-first_packet_valid = verify_packet(
-    trusted, trusted_tag, SECRET_KEY
-) and sequence_is_fresh(
+
+packet_authentic = verify_packet(trusted, trusted_tag, SECRET_KEY)
+packet_is_new = sequence_is_fresh(
     trusted["seq"], last_accepted_seq
 )
 
-if first_packet_valid:
-   st.session_state.last_accepted_seq_by_device[
-    device_id
-] = trusted["seq"]
-
-replay_rejected = (
-    replay_attack
-    and (
-        not verify_packet(trusted, trusted_tag, SECRET_KEY)
-        or not sequence_is_fresh(
-            trusted["seq"], last_accepted_seq
-        )
-    )
-)
+if replay_attack:
+    replay_rejected = not (packet_authentic and packet_is_new)
+else:
+    replay_rejected = False
+    if packet_authentic and packet_is_new:
+        st.session_state.last_accepted_seq_by_device[
+            device_id
+        ] = trusted["seq"]
 
 # --------------------------- HEADER ---------------------------
 st.markdown(f"""
@@ -454,7 +447,7 @@ if not replay_attack:
     )
 elif replay_rejected:
     st.error(
-        "REPLAY REJECTED — sequence 104 was already accepted."
+        f"REPLAY REJECTED — sequence {trusted['seq']} was already accepted."
     )
 else:
     st.success(
