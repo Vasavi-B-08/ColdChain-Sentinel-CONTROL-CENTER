@@ -7,6 +7,7 @@ import hashlib
 import json
 import time
 from datetime import datetime
+import requests
 
 st.set_page_config(
     page_title="ColdChain Sentinel | Control Center",
@@ -68,6 +69,43 @@ div[data-testid="stAlert"]{border-radius:12px}
 </style>
 """, unsafe_allow_html=True)
 
+# --------------------------- LIVE ESP32 SENSOR ---------------------------
+RENDER_URL = "https://coldchain-sentinel-control-center.onrender.com"
+
+def get_latest_sensor_reading():
+    token = st.secrets.get("CCS_API_TOKEN", "")
+
+    if not token:
+        return None, "Missing CCS_API_TOKEN in Streamlit Secrets"
+
+    try:
+        response = requests.get(
+            f"{RENDER_URL}/latest",
+            headers={"X-CCS-Token": token},
+            timeout=8,
+        )
+
+        if response.status_code == 404:
+            return None, "No sensor readings received yet"
+
+        response.raise_for_status()
+        data = response.json()
+
+        if not isinstance(data, dict) or "temperature_c" not in data:
+            return None, "Invalid response from receiver"
+
+        temperature = float(data["temperature_c"])
+
+        if not -55 <= temperature <= 125:
+            return None, "Temperature reading outside sensor limits"
+
+        return data, None
+
+    except requests.RequestException:
+        return None, "Could not connect to Render receiver"
+    except (ValueError, TypeError):
+        return None, "Invalid temperature data received"
+        
 # --------------------------- MODEL + SECURITY ---------------------------
         
 def thermal_sim(ambient, initial, minutes, mode, door,
@@ -228,6 +266,39 @@ else:
 if packet_authentic and packet_is_new:
     st.session_state.last_accepted_seq_by_device[device_id] = trusted["seq"]
 
+# --------------------------- LIVE SENSOR PANEL ---------------------------
+st.markdown("### 📡 LIVE ESP32 SENSOR")
+
+if st.button("↻ Fetch latest sensor reading", key="fetch_live_sensor"):
+    st.session_state["fetch_live_sensor_now"] = True
+
+sensor_data, sensor_error = get_latest_sensor_reading()
+
+if sensor_data:
+    live_temp = float(sensor_data["temperature_c"])
+    received_at = datetime.fromtimestamp(
+        float(sensor_data["received_at"])
+    ).strftime("%Y-%m-%d %H:%M:%S")
+
+    if live_temp < 2:
+        st.error(f"🔵 TOO COLD — {live_temp:.2f}°C")
+    elif live_temp > 8:
+        st.error(f"🔴 TOO HOT — {live_temp:.2f}°C")
+    else:
+        st.success(f"🟢 IN RANGE — {live_temp:.2f}°C")
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("ESP32 Temperature", f"{live_temp:.2f} °C")
+    m2.metric("Device ID", sensor_data.get("device_id", "Unknown"))
+    m3.metric("Sequence Number", sensor_data.get("seq", "—"))
+
+    st.caption(f"Last receiver timestamp: {received_at}")
+    st.caption(
+        "Live Wokwi simulation data. Not a validated vaccine-storage measurement."
+    )
+else:
+    st.warning(f"Live reading unavailable: {sensor_error}")
+    
 # --------------------------- HEADER ---------------------------
 st.markdown(f"""
 <div class="hero">
