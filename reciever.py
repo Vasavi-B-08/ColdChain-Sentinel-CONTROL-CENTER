@@ -6,7 +6,7 @@ from flask import Flask, request, jsonify, abort
 
 app = Flask(__name__)
 
-API_TOKEN = os.environ.get("CCS_API_TOKEN")
+API_TOKEN = os.environ.get("vials-28")
 lock = threading.Lock()
 latest_reading = None
 
