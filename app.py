@@ -8,6 +8,7 @@ import json
 import time
 from datetime import datetime
 import requests
+from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(
     page_title="ColdChain Sentinel | Control Center",
@@ -268,6 +269,11 @@ if packet_authentic and packet_is_new:
 
 # --------------------------- LIVE SENSOR PANEL ---------------------------
 st.markdown("### 📡 LIVE ESP32 SENSOR")
+
+st_autorefresh(
+    interval=2000,
+    key="live_sensor_refresh"
+)
 
 if st.button("↻ Fetch latest sensor reading", key="fetch_live_sensor"):
     st.session_state["fetch_live_sensor_now"] = True
