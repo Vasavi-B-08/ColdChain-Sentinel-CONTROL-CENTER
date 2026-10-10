@@ -42,13 +42,13 @@ def receive_reading():
 
     with lock:
         if latest_reading and latest_reading["device_id"] == device_id:
-    if seq <= latest_reading["seq"]:
-        return jsonify({
-            "error": "Stale or replayed sequence",
-            "received_seq": seq,
-            "last_accepted_seq": latest_reading["seq"],
-            "device_id": device_id
-        }), 409
+            if seq <= latest_reading["seq"]:
+                return jsonify({
+                    "error": "Stale or replayed sequence",
+                    "received_seq": seq,
+                    "last_accepted_seq": latest_reading["seq"],
+                    "device_id": device_id
+                }), 409
 
         latest_reading = {
             "device_id": device_id,
