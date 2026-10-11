@@ -144,7 +144,7 @@ def thermal_sim(ambient, initial, minutes, mode, door,
 
 
 def packet(temp, seq, key):
-    payload = {"device_id": "CCS-ESP32-01", "seq": int(seq), "temp": round(float(temp), 2)}
+    payload = {"device_id": "ccs-01", "seq": int(seq), "temp": round(float(temp), 2)}
     raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     tag = hmac.new(key.encode(), raw, hashlib.sha256).hexdigest()
     return payload, tag
@@ -187,7 +187,7 @@ with st.sidebar:
 )
     st.divider()
     st.markdown("### Chamber hardware")
-    st.caption("TEC1-12706 • ESP32 • SHT31")
+    st.caption("TEC1-12706 • ESP32 • DS18B20")
     st.caption("HMAC-SHA256 + sequence guard")
     if st.button("↻ Refresh simulation", use_container_width=True):
         st.rerun()
@@ -312,7 +312,7 @@ st.markdown(f"""
   <div class="hero-title">ColdChain Sentinel <span style="font-size:1.1rem;color:#59dfff">/ CONTROL CENTER</span></div>
   <div class="hero-sub">Pharmaceutical vaccine cold-chain monitoring • Device CCS-ESP32-01 • Local dashboard time {now}</div>
   <div class="flow">
-    <span class="node">🌡️ SHT31 SENSOR</span><span class="arrow">→</span><span class="node">🧠 ESP32 EDGE</span>
+    <span class="node">🌡️ DS18B20 SENSOR</span><span class="arrow">→</span><span class="node">🧠 ESP32 EDGE</span>
     <span class="arrow">→</span><span class="node">❄️ PELTIER TEC1-12706</span><span class="arrow">→</span>
     <span class="node">🔐 HMAC AUTH</span><span class="arrow">→</span><span class="node">📊 CONTROL CENTER</span>
   </div>
@@ -409,7 +409,7 @@ with left:
         </div>
         <div class="door {door_class}"><div class="door-label">THERMAL<br>INSULATION</div><div class="door-handle"></div></div>
       </div>
-      <div class="chamber-foot"><span>▦ 24 simulated vaccine vials</span><span>◎ SHT31 telemetry (simulated)</span><span>◈ Insulated enclosure</span></div>
+      <div class="chamber-foot"><span>▦ 24 simulated vaccine vials</span><span>◎ DS18B20 telemetry (simulated)</span><span>◈ Insulated enclosure</span></div>
     </div>
     """, unsafe_allow_html=True)
     st.markdown("")
@@ -498,7 +498,7 @@ with p1:
     <div class="card">
       <div class="kicker">01 / TRUSTED TELEMETRY</div>
       <div class="metric good">✓ AUTHENTIC</div>
-      <div class="small">Device CCS-ESP32-01 • SEQ {trusted['seq']} • {trusted['temp']:.1f}°C</div>
+      <div class="small">Device ccs-01 • SEQ {trusted['seq']} • {trusted['temp']:.1f}°C</div>
       <hr><div class="small">HMAC-SHA256 tag (preview)</div>
       <div style="font-family:monospace;font-size:.72rem;overflow-wrap:anywhere;color:#66edbd">{trusted_tag[:40]}…</div>
     </div>
@@ -508,7 +508,7 @@ with p2:
     <div class="card" style="border-color:{'#a83b50' if threat else '#23415d'}">
       <div class="kicker">02 / MODIFIED TELEMETRY</div>
       <div class="metric {'bad' if threat else 'warn'}">{'✕ REJECTED' if threat else '⚠ READY TO TEST'}</div>
-      <div class="small">Device CCS-ESP32-01 • SEQ {tampered['seq']} • {tampered['temp']:.1f}°C</div>
+      <div class="small">Device ccs-01 • SEQ {tampered['seq']} • {tampered['temp']:.1f}°C</div>
       <hr><div class="small">Signature validation</div>
       <div style="font-weight:700;color:{'#ff687a' if threat else '#ffca68'}">{'HMAC MISMATCH — PACKET DROPPED' if threat else 'Attack simulation disabled'}</div>
     </div>
