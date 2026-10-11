@@ -293,10 +293,26 @@ if sensor_data:
     else:
         st.success(f"🟢 IN RANGE — {live_temp:.2f}°C")
 
-    m1, m2, m3 = st.columns(3)
-    m1.metric("ESP32 Temperature", f"{live_temp:.2f} °C")
-    m2.metric("Device ID", sensor_data.get("device_id", "Unknown"))
-    m3.metric("Sequence Number", sensor_data.get("seq", "—"))
+    
+m1, m2, m3 = st.columns(3)
+m1.metric("ESP32 Temperature", f"{live_temp:.2f} °C")
+m2.metric("Humidity", (
+    f"{float(sensor_data['humidity_pct']):.1f} %"
+    if sensor_data.get("humidity_pct") is not None
+    else "Waiting for data"
+))
+m3.metric(
+    "Door Status",
+    (
+        "OPEN" if sensor_data.get("door_open") is True
+        else "CLOSED" if sensor_data.get("door_open") is False
+        else "Waiting for data"
+    )
+)
+
+st.caption(f"Device: {sensor_data.get('device_id', 'Unknown')} · "
+           f"Sequence: {sensor_data.get('seq', '—')}")
+
 
     st.caption(f"Last receiver timestamp: {received_at}")
     st.caption(
