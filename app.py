@@ -490,7 +490,7 @@ for col, label, value, note in [
 
 # --------------------------- SECURITY DEMONSTRATION ---------------------------
 st.divider()
-st.markdown("### 🛡️ Judge demo — packet authenticity & attack response")
+st.markdown("### 🛡️ Device Authentication Demo — packet authenticity & attack response")
 st.caption("This is a local demonstration, not a network intrusion detector. The attack banner reflects the sidebar simulation toggle.")
 p1, p2 = st.columns(2, gap="large")
 with p1:
