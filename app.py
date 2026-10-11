@@ -179,7 +179,7 @@ with st.sidebar:
     duration = st.slider("Simulation duration (min)", 30, 180, 90, 15)
     mode = st.selectbox("Controller", ["Hysteresis", "PID-like"])
     door = st.checkbox("Door opening disturbance", True)
-    attack = st.checkbox("Simulate spoofing attack", True)
+    attack = st.checkbox("Simulate spoofing attack", value=False)
     replay_attack = st.checkbox(
     "Simulate replay attack",
     value=False,
