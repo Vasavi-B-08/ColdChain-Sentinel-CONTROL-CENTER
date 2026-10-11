@@ -318,7 +318,7 @@ if sensor_data:
     st.caption(
         "Live Wokwi simulation data. Not a validated vaccine-storage measurement."
     )
-    else:
+else:
         st.warning(f"Live reading unavailable: {sensor_error}")
     
 # --------------------------- HEADER ---------------------------
